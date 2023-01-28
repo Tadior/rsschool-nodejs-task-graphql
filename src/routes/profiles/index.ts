@@ -2,6 +2,7 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createProfileBodySchema, changeProfileBodySchema } from './schema';
 import type { ProfileEntity } from '../../utils/DB/entities/DBProfiles';
+import { validate as checkUuid } from 'uuid';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -23,7 +24,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         equals: request.params.id,
       });
 
-      if (!profile) {
+      if (profile === null) {
         throw fastify.httpErrors.notFound();
       }
 
@@ -44,7 +45,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         equals: request.body.userId,
       });
 
-      if (!user) {
+      if (user === null) {
         throw fastify.httpErrors.badRequest();
       }
 
@@ -54,6 +55,14 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       });
 
       if (usersProfile) {
+        throw fastify.httpErrors.badRequest();
+      }
+      const type = await fastify.db.memberTypes.findOne({
+        key: 'id',
+        equals: request.body.memberTypeId,
+      });
+
+      if (type === null) {
         throw fastify.httpErrors.badRequest();
       }
 
@@ -69,15 +78,20 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
-      await fastify.db.profiles.delete(request.params.id);
+      if (checkUuid(request.params.id) === false) {
+        throw fastify.httpErrors.badRequest();
+      }
+
       const profile = await fastify.db.profiles.findOne({
         key: 'id',
         equals: request.params.id,
       });
 
-      if (!profile) {
+      if (profile === null) {
         throw fastify.httpErrors.notFound();
       }
+
+      await fastify.db.profiles.delete(request.params.id);
 
       return profile;
     }
@@ -92,12 +106,16 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
+      if (checkUuid(request.params.id) === false) {
+        throw fastify.httpErrors.badRequest();
+      }
+
       const profile = await fastify.db.profiles.findOne({
         key: 'id',
         equals: request.params.id,
       });
 
-      if (!profile) {
+      if (profile === null) {
         throw fastify.httpErrors.notFound();
       }
 

@@ -75,7 +75,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         const index = subscriber.subscribedToUserIds.indexOf(request.params.id);
 
         if (index !== -1) {
-          subscribers.splice(index, 1);
+          subscriber.subscribedToUserIds.splice(index, 1);
         }
 
         await fastify.db.users.change(subscriber.id, subscriber);
