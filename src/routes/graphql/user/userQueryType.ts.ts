@@ -6,6 +6,8 @@ import {
   GraphQLInt,
 } from 'graphql';
 import { profileQueryType } from '../profile/profileQueryType';
+import { memberQueryType } from '../memberType/memberQueryType';
+import { postQueryType } from '../posts/postQueryType';
 
 export const userQueryType = new GraphQLObjectType({
   name: 'User',
@@ -19,6 +21,31 @@ export const userQueryType = new GraphQLObjectType({
       type: profileQueryType,
       resolve: async (user: any, args: any, fastify: any) => {
         return await fastify.db.profiles.findOne({
+          key: 'userId',
+          equals: user.id,
+        });
+      },
+    },
+    memberType: {
+      type: memberQueryType,
+      resolve: async (user: any, args: any, fastify: any) => {
+        const profile = await fastify.db.profiles.findOne({
+          key: 'userId',
+          equals: user.id,
+        });
+        if (profile === null) {
+          return Promise.resolve(null);
+        }
+        return await fastify.db.memberTypes.findOne({
+          key: 'id',
+          equals: profile.memberTypeId,
+        });
+      },
+    },
+    posts: {
+      type: new GraphQLList(postQueryType),
+      resolve: async (user: any, args: any, fastify: any) => {
+        return await fastify.db.posts.findMany({
           key: 'userId',
           equals: user.id,
         });
