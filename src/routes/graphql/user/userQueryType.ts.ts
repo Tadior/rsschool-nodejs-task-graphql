@@ -8,7 +8,7 @@ import {
 import { profileQueryType } from '../profile/profileQueryType';
 import { memberQueryType } from '../memberType/memberQueryType';
 import { postQueryType } from '../posts/postQueryType';
-
+// @ts-ignore
 export const userQueryType = new GraphQLObjectType({
   name: 'User',
   fields: {
@@ -49,6 +49,24 @@ export const userQueryType = new GraphQLObjectType({
           key: 'userId',
           equals: user.id,
         });
+      },
+    },
+    userSubscribedTo: {
+      // @ts-ignore - Не понял как тут правильно затипизировать
+      type: new GraphQLList(userQueryType),
+      resolve: async (user: any, args: any, fastify: any) => {
+        const usersBySubscribedToUserIds =
+          fastify.loaders.usersBySubscribedToUserIds;
+        return await usersBySubscribedToUserIds.load(user.id);
+      },
+    },
+    subscribedToUser: {
+      // @ts-ignore - Не понял как тут правильно затипизировать
+      type: new GraphQLList(userQueryType),
+      resolve: async (user: any, args: any, fastify: any) => {
+        const userById = fastify.loaders.userById;
+
+        return await userById.loadMany(user.subscribedToUserIds);
       },
     },
   },
